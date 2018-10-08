@@ -202,12 +202,13 @@
 
                float3 tmpvar_29 = normalize((((normalize(xlv_TEXCOORD4) * tangentNormal.x) + (normalize(xlv_TEXCOORD5) * tangentNormal.y)) + ( normalize(xlv_TEXCOORD2.xyz)* tangentNormal.z)));
 
- 
-               float4 DetailNormalMap = texture (sDetailNormalSampler, (xlv_TEXCOORD0.xy * cDetailUVScale));
+ ///detail normal map
+               float4 DetailNormalMap = tex2D (sDetailNormalSampler, (xlv_TEXCOORD0.xy * cDetailUVScale));
 
 
               // 将法线向量转换为范围[-1,1]
-                float3 tmpvar_31 = ((DetailNormalMap.z * 2.0) - 1.0)，((DetailNormalMap.w * 2.0) - 1.0) ，0 ;
+               float3 tmpvar_31 = UnpackNormal(DetailNormalMap);
+               // float3 tmpvar_31 = ((DetailNormalMap.z * 2.0) - 1.0)，((DetailNormalMap.w * 2.0) - 1.0) ，0 ;
    
                float3 tmpvar_32 = normalize((tangentNormal.xyz + ((tmpvar_31 * 0.2) * (maokong_intensity * tangentNormal.w))));
 
