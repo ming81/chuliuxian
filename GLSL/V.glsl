@@ -5,6 +5,8 @@ uniform highp mat4 LightViewProjTex;
 uniform highp vec4 FogInfo;
 uniform highp vec4 SkeletonData[192];
 uniform highp mat4 World;
+
+//struct vertexin
 in highp vec4 POSITION;
 in highp vec4 COLOR;
 in highp vec4 NORMAL;
@@ -13,6 +15,8 @@ in highp vec4 TANGENT;
 in highp vec4 BINORMAL;
 in highp vec4 BLENDWEIGHT;
 in highp  vec4 BLENDINDICES;
+
+//struct vertexout
 out highp vec4 xlv_TEXCOORD0;
 out highp vec4 xlv_TEXCOORD1;
 out highp vec4 xlv_TEXCOORD2;
@@ -26,9 +30,15 @@ void main ()
 {
   highp vec3 tmpvar_1;
   highp vec4 tmpvar_2;
+
   tmpvar_2.w = 1.0;
   tmpvar_2.xyz = POSITION.xyz;
+
+
+
   tmpvar_1 = ((NORMAL.xyz * 2.0) - 1.0);
+
+
   highp vec3 tmpvar_3;
   tmpvar_3 = normalize(TANGENT.xyz);
   highp vec3 tmpvar_4;
@@ -120,10 +130,17 @@ void main ()
   tmpvar_28[1u] = World[1u].xyz;
   tmpvar_28[2u] = World[2u].xyz;
   tmpvar_22.xyz = normalize((tmpvar_17 * tmpvar_28));
+
+
+
   highp mat3 tmpvar_29;
-  tmpvar_29[uint(0)] = World[uint(0)].xyz;
+  tmpvar_29[uint(0)] = nnnnnnnnnnnnn[uint(0)].xyz;
   tmpvar_29[1u] = World[1u].xyz;
   tmpvar_29[2u] = World[2u].xyz;
+
+
+
+
   highp mat3 tmpvar_30;
   tmpvar_30[uint(0)] = World[uint(0)].xyz;
   tmpvar_30[1u] = World[1u].xyz;
@@ -132,7 +149,10 @@ void main ()
   tmpvar_31[uint(0)] = World[uint(0)].xyz;
   tmpvar_31[1u] = World[1u].xyz;
   tmpvar_31[2u] = World[2u].xyz;
+
   tmpvar_25.xyz = normalize((tmpvar_21 * tmpvar_31));
+
+
   tmpvar_23.xyz = (tmpvar_27.xyz - CameraPosVS.xyz);
   highp float fHeightCoef_32;
   highp float tmpvar_33;
