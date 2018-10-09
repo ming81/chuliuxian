@@ -42,11 +42,17 @@ void main ()
   highp vec3 tmpvar_3;
   tmpvar_3 = normalize(TANGENT.xyz);
 
-  
+
   highp vec3 tmpvar_4;
   tmpvar_4 = normalize(BINORMAL.xyz);
+
+
   highp vec4 tmpvar_5;
+
+  
   highp vec3 tmpvar_6;
+
+
   tmpvar_5.w = tmpvar_2.w;
   highp vec4 tmpvar_7;
   tmpvar_7 = vec4(BLENDINDICES);

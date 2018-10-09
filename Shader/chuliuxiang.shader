@@ -125,13 +125,18 @@
 				vertexout o;
 
 				float4 tmpvar_2= (v.position.xyz,1);
-				// 将法线向量转换为范围[-1,1]
+				// 将法线向量转换为范围[-1,1] //normal
 				float3 tmpvar_1 = (v.normal.xyz * 2.0) - 1.0;
 
 				float3 tmpvar_3 = normalize(v.tangent.xyz);
 
-				float3 tmpvar_4 = normalize(v.bitangentDir.xyz);
+				float3 tmpvar_4 = cross(tmpvar_1,tmpvar_3);
 
+				float4 tmpvar_5;
+
+				tmpvar_5.w = tmpvar_2.w;
+
+				
 
 
 
@@ -147,10 +152,7 @@
 				o.xlv_TEXCOORD7;
 				o.xlv_TEXCOORD1;
 
-			
-		
-				
-				float4 tmpvar_4;
+
 
 
 				
