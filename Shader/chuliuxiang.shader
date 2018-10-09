@@ -86,14 +86,15 @@
 
 			struct vertexin
 			{
-				float4 vertex : POSITION;
-				float2 uv : TEXCOORD0;
+				float4 position : POSITION;
+				float4 normal: NORMAL;
 				float4 tangent: TANGENT;
+				float2 uv : TEXCOORD0;				
 				float2 texcoord0: TEXCOORD0;
 				float2 texcoord2: TEXCOORD2;
 			//	in  float4 POSITION;
 			//	in  float4 COLOR;
-				float4 normal: NORMAL;
+			
 			//	in  float2 TEXCOORD0;			
 			//	in  float4 BINORMAL;
 			//	in  float4 BLENDWEIGHT;
@@ -105,7 +106,7 @@
 			{
 				//float2 uv : TEXCOORD0;
 			
-				float4 vertex : SV_POSITION;
+				float4 Position : SV_POSITION;
 			
 				float2 uv0:TEXCOORD0;//TEXCOORD0	
 				float4 xlv_TEXCOORD1:TEXCOORD1;	
@@ -123,21 +124,37 @@
 			{
 				vertexout o;
 
+				float4 tmpvar_2= (v.position.xyz,1);
+				// 将法线向量转换为范围[-1,1]
+				float3 tmpvar_1 = (v.normal.xyz * 2.0) - 1.0;
+
+				float3 tmpvar_3 = normalize(v.tangent.xyz);
+
+				float3 tmpvar_4 = normalize(v.bitangentDir.xyz);
+
+
+
+
+
+
 				o.uv0 = v.texcoord0;
+
 				o.normaldir = v.normal;
+
 				o.tangentDir = v.tangent;
+
 				o.xlv_TEXCOORD3;
 				o.xlv_TEXCOORD7;
 				o.xlv_TEXCOORD1;
 
-				float3 tmpvar_1;
+			
 		
-				float3 tmpvar_3;
+				
 				float4 tmpvar_4;
 
 
 				
-				float4 tmpvar_2= (v.vertex.xyz,1);
+				
 
 				tmpvar_1 = (v.normal.xyz * 2) -1 ; 
 				tmpvar_3 = normalize(v.tangent.xyz);
@@ -145,7 +162,7 @@
 				float3 worldTangent = UnityObjectToWorldDir(v.tangent.xyz);
                 float3 worldNormal = UnityObjectToWorldNormal(v.normal);
 				float3 binormal = cross(normalize(worldNormal), normalize(worldTangent)) * v.tangent.w;
-				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.Position = UnityObjectToClipPos(v.position);
 
 				o.xlv_COLOR;
 

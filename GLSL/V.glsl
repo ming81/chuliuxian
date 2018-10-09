@@ -35,12 +35,14 @@ void main ()
   tmpvar_2.xyz = POSITION.xyz;
 
 
-
+//转为法线空间
   tmpvar_1 = ((NORMAL.xyz * 2.0) - 1.0);
 
 
   highp vec3 tmpvar_3;
   tmpvar_3 = normalize(TANGENT.xyz);
+
+  
   highp vec3 tmpvar_4;
   tmpvar_4 = normalize(BINORMAL.xyz);
   highp vec4 tmpvar_5;
