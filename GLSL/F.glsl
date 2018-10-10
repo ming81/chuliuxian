@@ -306,9 +306,13 @@ void main ()
   highp vec3 tmpvar_87;
   tmpvar_87 = (tmpvar_29 * tmpvar_29);
   nSquared_86 = tmpvar_87;
+
+
   highp ivec3 tmpvar_88;
   tmpvar_88 = ivec3(lessThan (tmpvar_29, vec3(0.0, 0.0, 0.0)));
   highp vec4 tmpvar_89;
+
+  
   tmpvar_89 = (((nSquared_86.x * cPointCloud[tmpvar_88.x]) + (nSquared_86.y * cPointCloud[
     (tmpvar_88.y + 2)
   ])) + (nSquared_86.z * cPointCloud[(tmpvar_88.z + 4)]));

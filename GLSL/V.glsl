@@ -13,8 +13,10 @@ in highp vec4 NORMAL;
 in highp vec2 TEXCOORD0;
 in highp vec4 TANGENT;
 in highp vec4 BINORMAL;
+
 in highp vec4 BLENDWEIGHT;
 in highp  vec4 BLENDINDICES;
+
 
 //struct vertexout
 out highp vec4 xlv_TEXCOORD0;
@@ -49,13 +51,17 @@ void main ()
 
   highp vec4 tmpvar_5;
 
-  
+
   highp vec3 tmpvar_6;
 
 
   tmpvar_5.w = tmpvar_2.w;
+
   highp vec4 tmpvar_7;
+
   tmpvar_7 = vec4(BLENDINDICES);
+
+
   highp int idx_8;
   idx_8 = int(tmpvar_7.x);
   highp int idx_9;
@@ -65,6 +71,9 @@ void main ()
   highp int idx_11;
   idx_11 = int(tmpvar_7.w);
   highp vec4 tmpvar_12;
+
+
+
   tmpvar_12 = (((
     (BLENDWEIGHT.x * SkeletonData[(3 * idx_8)])
    + 
@@ -72,6 +81,8 @@ void main ()
   ) + (BLENDWEIGHT.z * SkeletonData[
     (3 * idx_10)
   ])) + (BLENDWEIGHT.w * SkeletonData[(3 * idx_11)]));
+
+
   highp vec4 tmpvar_13;
   tmpvar_13 = (((
     (BLENDWEIGHT.x * SkeletonData[((3 * idx_8) + 1)])
@@ -92,6 +103,10 @@ void main ()
   ])) + (BLENDWEIGHT.w * SkeletonData[(
     (3 * idx_11)
    + 2)]));
+
+
+
+
   highp vec3 tmpvar_15;
   tmpvar_15.x = dot (tmpvar_12.xyz, POSITION.xyz);
   tmpvar_15.y = dot (tmpvar_13.xyz, POSITION.xyz);
@@ -126,7 +141,9 @@ void main ()
   highp vec4 tmpvar_22;
   highp vec4 tmpvar_23;
   highp vec4 tmpvar_24;
-  highp vec4 tmpvar_25;
+
+  highp vec4 tmpvar_25;//o
+
   highp vec4 tmpvar_26;
   tmpvar_26.w = 1.0;
   tmpvar_26.xyz = tmpvar_5.xyz;
@@ -142,7 +159,7 @@ void main ()
 
 
   highp mat3 tmpvar_29;
-  tmpvar_29[uint(0)] = nnnnnnnnnnnnn[uint(0)].xyz;
+  tmpvar_29[uint(0)] = World[uint(0)].xyz;
   tmpvar_29[1u] = World[1u].xyz;
   tmpvar_29[2u] = World[2u].xyz;
 
@@ -167,6 +184,8 @@ void main ()
   tmpvar_33 = clamp (((tmpvar_27.y * FogInfo.z) + FogInfo.w), 0.0, 1.0);
   fHeightCoef_32 = (tmpvar_33 * tmpvar_33);
   fHeightCoef_32 = (fHeightCoef_32 * fHeightCoef_32);
+
+
   highp float tmpvar_34;
   tmpvar_34 = (1.0 - exp((
     -(max (0.0, (sqrt(
@@ -175,6 +194,10 @@ void main ()
    * 
     max ((FogInfo.y * fHeightCoef_32), (0.1 * FogInfo.y))
   )));
+
+
+
+
   tmpvar_23.w = (tmpvar_34 * tmpvar_34);
   tmpvar_24.xyz = vec3(0.0, 0.0, 0.0);
   tmpvar_24.w = 0.0;
@@ -184,9 +207,17 @@ void main ()
   tmpvar_36.w = 0.0;
   highp vec4 tmpvar_37;
   tmpvar_37.w = 1.0;
+
   tmpvar_37.xyz = tmpvar_27.xyz;
+
   tmpvar_35 = (tmpvar_37 * ViewProjVS);
+
+
   tmpvar_22 = tmpvar_36;
+
+
+
+
   gl_Position.xyw = tmpvar_35.xyw;
   xlv_TEXCOORD0 = TEXCOORD0.xyxy;
   xlv_TEXCOORD1 = tmpvar_27;
@@ -195,8 +226,14 @@ void main ()
   xlv_TEXCOORD4 = normalize(clamp ((tmpvar_18 * tmpvar_29), -2.0, 2.0));
   xlv_TEXCOORD5 = normalize(clamp ((tmpvar_19 * tmpvar_30), -2.0, 2.0));
   xlv_TEXCOORD6 = tmpvar_24;
+
+
   xlv_TEXCOORD7 = (tmpvar_27 * LightViewProjTex);
+
+
   xlv_COLOR = tmpvar_25;
+
+
   gl_Position.z = ((tmpvar_35.z * 2.0) - tmpvar_35.w);
 }
 

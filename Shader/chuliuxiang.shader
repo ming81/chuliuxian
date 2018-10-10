@@ -92,6 +92,8 @@
 				float2 uv : TEXCOORD0;				
 				float2 texcoord0: TEXCOORD0;
 				float2 texcoord2: TEXCOORD2;
+				float4 color:COLOR;
+			
 			//	in  float4 POSITION;
 			//	in  float4 COLOR;
 			
@@ -111,9 +113,10 @@
 				float2 uv0:TEXCOORD0;//TEXCOORD0	
 				float4 xlv_TEXCOORD1:TEXCOORD1;	
 				float3 normaldir:TEXCOORD2;//float2 TEXCOORD2:TEXCOORD2;	
+				float4 xlv_TEXCOORD3:TEXCOORD3; 
 				float3 tangentDir:TEXCOORD4; //	float2 TEXCOORD4:TEXCOORD4;	
 				float3 bitangentDir:TEXCOORD5;//float2 TEXCOORD5:xlv_TEXCOORD5
-				float4 xlv_TEXCOORD3:TEXCOORD3; 
+				
 				float4 xlv_COLOR:Color;
 				float4 xlv_TEXCOORD7:TEXCOORD7;
 									
@@ -124,7 +127,7 @@
 			{
 				vertexout o;
 
-				float4 tmpvar_2= (v.position.xyz,1);
+				float4 vertex= (v.position.xyz,1);
 				// 将法线向量转换为范围[-1,1] //normal
 				float3 tmpvar_1 = (v.normal.xyz * 2.0) - 1.0;
 
@@ -132,17 +135,168 @@
 
 				float3 tmpvar_4 = cross(tmpvar_1,tmpvar_3);
 
-				float4 tmpvar_5;
 
-				tmpvar_5.w = tmpvar_2.w;
+			
 
-				
+				float4 BLENDINDICES;
+				float4 BLENDWEIGHT;
+
+				float4 tmpvar_7 = BLENDINDICES;
+
+
+				int idx_8 = tmpvar_7.x;
+				int idx_9 = tmpvar_7.y;
+				int idx_10 = tmpvar_7.z;
+				int idx_11 = tmpvar_7.w;
+
+				float4 BoneVertex1  = ((((BLENDWEIGHT.x * SkeletonData[(3 * idx_8)])
+					                           + (BLENDWEIGHT.y * SkeletonData[(3 * idx_9)])) 
+				                               + (BLENDWEIGHT.z * SkeletonData[(3 * idx_10)])) 
+				                               + (BLENDWEIGHT.w * SkeletonData[(3 * idx_11)]));
+
+				 float4 BoneVertex2  = ((((BLENDWEIGHT.x * SkeletonData[((3 * idx_8) + 1)])
+				 	                             + (BLENDWEIGHT.y * SkeletonData[((3 * idx_9) + 1)])) 
+				                                  + (BLENDWEIGHT.z * SkeletonData[((3 * idx_10) + 1)])) 
+				                                  + (BLENDWEIGHT.w * SkeletonData[((3 * idx_11)+ 1)]));
+
+				 float4 BoneVertex3 = ((((BLENDWEIGHT.x * SkeletonData[((3 * idx_8) + 2)]) 
+				 	                 + (BLENDWEIGHT.y * SkeletonData[((3 * idx_9) + 2)]))
+				 	                 + (BLENDWEIGHT.z * SkeletonData[((3 * idx_10) + 2)])) 
+				                     + (BLENDWEIGHT.w * SkeletonData[((3 * idx_11)+ 2)]));
+
+////bonevertexspace
+   float3 BoneVertexSpace = (dot (BoneVertex1.xyz, vertex.xyz), dot (BoneVertex2.xyz, vertex.xyz) ,dot (BoneVertex3.xyz, vertex.xyz));
+
+ 
+   float3 BonePosition = (BoneVertex1.w,BoneVertex2.w,BoneVertex3.w);
+
+   float4 NewBonePositon1 = ((BoneVertexSpace + BonePosition), vertex.w);
+
+
+
+   float3 tmpvar_17 = (dot (BoneVertex1.xyz, tmpvar_1) ,dot (BoneVertex2.xyz, tmpvar_1) , dot (BoneVertex3.xyz, tmpvar_1));
+ 
+   float3 tmpvar_18 = ( dot (BoneVertex1.xyz, tmpvar_3),dot (BoneVertex2.xyz, tmpvar_3)  ,dot (BoneVertex3.xyz, tmpvar_3));
+  
+   float3 tmpvar_19 = (dot (BoneVertex1.xyz, tmpvar_4), dot (BoneVertex2.xyz, tmpvar_4) , dot (BoneVertex3.xyz, tmpvar_4));
+
+ 
+  float3 tmpvar_6 = ((v.color.zyx * 2.0) - 1.0);
+
+   float3 tmpvar_20 = ( -(tmpvar_6.x) ,tmpvar_6.z , tmpvar_6.y );
+
+   float3 tmpvar_21 = (dot (BoneVertex1.xyz, tmpvar_20) , dot (BoneVertex2.xyz, tmpvar_20) ,dot (BoneVertex3.xyz, tmpvar_20));
+
+  tmpvar_6 = tmpvar_21;
+
+   float4 tmpvar_22;
+   float4 tmpvar_23;
+   float4 tmpvar_24;
+
+   float4 tmpvar_25;
+
+   float4 tmpvar_27 = (mul(World,NewBonePositon1).xyz,1);
+
+   float3x3 tmpvar_28 ={
+   	                    World[0].xyz,
+   	                    World[1].xyz,
+   	                    World[2].xyz
+   	                   };
+
+
+   tmpvar_22.xyz = normalize(mul(tmpvar_28,tmpvar_17));
+
+
+
+  float3x3 tmpvar_29 = 
+  {
+   World[0].xyz,
+   World[1].xyz, 
+   World[2].xyz
+  };
+
+
+
+   float3x3 tmpvar_30;
+  tmpvar_30[0] = World[0].xyz;
+  tmpvar_30[1] = World[1].xyz;
+  tmpvar_30[2] = World[2].xyz;
+   float3x3 tmpvar_31;
+  tmpvar_31[0] = World[0].xyz;
+  tmpvar_31[1] = World[1].xyz;
+  tmpvar_31[2] = World[2].xyz;
+
+  tmpvar_25.xyz = normalize(mul( tmpvar_31,tmpvar_21));
+
+
+  tmpvar_23.xyz = (tmpvar_27.xyz - CameraPosVS.xyz);
+  
+   float tmpvar_33  = clamp (((tmpvar_27.y * FogInfo.z) + FogInfo.w), 0.0, 1.0); 
+  
+ float  fHeightCoef_32 = (tmpvar_33 * tmpvar_33);
+
+  fHeightCoef_32 = (fHeightCoef_32 * fHeightCoef_32);
+
+   float tmpvar_34 = (1.0 - exp((
+    -(max (0.0, (sqrt(
+      dot (tmpvar_23.xyz, tmpvar_23.xyz)
+    ) - FogInfo.x)))
+   * 
+    max ((FogInfo.y * fHeightCoef_32), (0.1 * FogInfo.y))
+  )));
+
+
+
+
+  tmpvar_23.w = (tmpvar_34 * tmpvar_34);
+  tmpvar_24.xyz = float3(0.0, 0.0, 0.0);
+  tmpvar_24.w = 0.0;
+   float4 tmpvar_35;
+   float4 tmpvar_36;
+  tmpvar_36.xyz = tmpvar_22.xyz;
+  tmpvar_36.w = 0.0;
+
+  float4 tmpvar_37 = (tmpvar_27.xyz,1);
+
+
+
+  tmpvar_35 =mul( ViewProjVS,tmpvar_37);
+
+
+  tmpvar_22 = tmpvar_36;
+
+ 
+  v.position.xyz = tmpvar_35.xyw;  //gl_Position.xyw = tmpvar_35.xyw;
+
+ 
+  	o.uv0 = v.texcoord0; //xlv_TEXCOORD0 = TEXCOORD0.xyxy;
+
+  xlv_TEXCOORD1 = tmpvar_27;
+  xlv_TEXCOORD2 = tmpvar_36;
+  xlv_TEXCOORD3 = tmpvar_23;
+  xlv_TEXCOORD4 = normalize(clamp ((tmpvar_18 * tmpvar_29), -2.0, 2.0));
+  xlv_TEXCOORD5 = normalize(clamp ((tmpvar_19 * tmpvar_30), -2.0, 2.0));
+  xlv_TEXCOORD6 = tmpvar_24;
+
+
+  xlv_TEXCOORD7 = (tmpvar_27 * LightViewProjTex);
+
+
+  xlv_COLOR = tmpvar_25;
+
+
+  gl_Position.z = ((tmpvar_35.z * 2.0) - tmpvar_35.w);
 
 
 
 
 
-				o.uv0 = v.texcoord0;
+
+
+
+
+
+			
 
 				o.normaldir = v.normal;
 
@@ -166,9 +320,6 @@
 				float3 binormal = cross(normalize(worldNormal), normalize(worldTangent)) * v.tangent.w;
 				o.Position = UnityObjectToClipPos(v.position);
 
-				o.xlv_COLOR;
-
-
                 //世界空间法线
 				//o.normalDir = UnityObjectToWorldNormal(v.normal);
 				//世界空间切线
@@ -176,6 +327,14 @@
                 //世界空间副切线
                // o.bitangentDir = normalize(cross(o.normalDir, o.tangentDir) * v.tangent.w);
 			//	o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+
+				float4 tmpvar_25;
+
+				//tmpvar_25.xyz = normalize()
+
+				//o.xlv_COLOR = ;
+
+//				o.Position =  ((tmpvar_35.z * 2.0) - tmpvar_35.w);
 				
 				return o;
 			}
@@ -750,11 +909,12 @@
   tmpvar_178 = clamp ((sin(
     ((6.283185 * tmpvar_177) * cEmissionScale.z)
   ) - 0.8), 0.0, 1.0);
-  emission_3.xyz = (emission_3.xyz * (emission_3.w * (
-    (cEmissionScale.x * (1.0 - tmpvar_176))
-   + 
-    (cEmissionScale.y * tmpvar_178)
-  )));
+
+  emission_3.xyz = (emission_3.xyz * (emission_3.w * ((cEmissionScale.x * (1.0 - tmpvar_176))+ (cEmissionScale.y * tmpvar_178))));
+
+
+
+
   OUT_4.xyz = (tmpvar_174.xyz + emission_3.xyz);
    float3 tmpvar_179;
   tmpvar_179 = ((FogColor2.xyz * clamp (
