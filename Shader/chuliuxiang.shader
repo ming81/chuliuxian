@@ -247,10 +247,6 @@ fixed4 frag (vertexout i) : SV_Target{
 	float4 xlv_TEXCOORD7 = i.xlv_TEXCOORD7;
 	float4 posWorld = i.posWorld;
 
-
-
-	float4 emission_3;
-
 	float specularMask_5;
 	float3 SpecRadiance_6;
 	float3 DiffuseIrradiance_7;
@@ -586,7 +582,6 @@ fixed4 frag (vertexout i) : SV_Target{
 	m2_115 = (m_116 * m_116);
 	d_114 = ((((tmpvar_118 * m2_115)- tmpvar_118) * tmpvar_118) + 1.0);
 
-
 	float3 tmpvar_123;
 	tmpvar_123 = ((float3(0.04, 0.04, 0.04) + (float3(0.96, 0.96, 0.96) * exp2((((-5.55473 * tmpvar_119) - 6.98316) * tmpvar_119)))) * 0.25);
 	BRDF1_113 = ((tmpvar_121 / (
@@ -606,14 +601,11 @@ fixed4 frag (vertexout i) : SV_Target{
 	Roughness_128 = tmpvar_100;
 
 	float3 R_129 = (I_37 - (2.0 * (dot (normalDirection, I_37)* normalDirection)));
-
-
 	float tmpvar_134 = float((R_129.z > 0.0));
 
 	float tmpvar_135 = ((tmpvar_134 * 2.0) - 1.0);
 	R_129.xy = (R_129.xy / ((R_129.z * tmpvar_135) + 1.0));
 	R_129.xy = ((R_129.xy * float2(0.25, -0.25)) + (0.25 + (0.5 * tmpvar_134)));
-
 
 	float4 IBL = texCUBElod(sEnvSampler,float4(R_129, (Roughness_128 / 0.17))).xyzw;
 
@@ -621,132 +613,76 @@ fixed4 frag (vertexout i) : SV_Target{
 
 	SPL = (SPL * ((cEnvStrength * EnvInfo.w) * 10.0));
 
-
-
 	SpecRadiance_6 = (((((tmpvar_112 * SpecularMask1_17) + ((tmpvar_111 * ( (m2_102 / ((d_101 * d_101) * 3.141593))* tmpvar_110)) * SpecularMask2_16))* (1.0 - Ma)
 	) + ((tmpvar_112 * 0.5)* Ma)) + (((tmpvar_92 * ((BRDF1_113 * SpecularMask1_17) + ((
 	(m2_115 / ((d_114 * d_114) * 3.141593))* tmpvar_123) * SpecularMask2_16)))* (1.0 - Ma)) + ((tmpvar_92 * BRDF1_113)* Ma)));
 	SpecRadiance_6 = (SpecRadiance_6 + (((((tmpvar_124 * tmpvar_90) * (SpecularMask1_17 * EnvInfo.w)) * (5.0 * cEnvStrength))* 
 	(1.0 - Ma)) + ((((SPL * tmpvar_124) * MaksTex.z) * ((SpecularMask2_16 * (1.0 - Ma)) + Ma))* dot (tmpvar_90, float3(0.3, 0.59, 0.11)))));
 
-
-
 	float tmpvar_137 = (((SpecularMask2_16 + SpecularMask1_17) * (1.0 - Ma)) + Ma).x;
-
 	specularMask_5 = tmpvar_137;
-
-
-
 	float3 SpecularColor = (float3(0.04, 0.04, 0.04) * specularMask_5);
-
-
 	float Roughness_var = clamp (Roughness_18, 0.0, 1.0);
+	float3 finalIrradiance = DiffuseIrradiance_7;
+	float3 FinalLight = float3(0.0, 0.0, 0.0);;
 
 
-	float3 DiffLit_141 = DiffuseIrradiance_7;
-
-	float3 lighting_142 = float3(0.0, 0.0, 0.0);;
-
-
-
+//if light0 w > 0
 	if ((Lights0[3].w > 0.0)) {
+		float3 LightDis = (Lights0[0].xyz - posWorld.xyz);
+		float RealDis = sqrt(dot (LightDis, LightDis));
+		float3 NRealDis = (LightDis / RealDis);
+		float Lights0Cos = clamp (dot (MaksNormalDir, NRealDis), 0.0, 1.0);
+		float Atten = clamp (((RealDis * Lights0[1].w) + Lights0[0].w), 0.0, 1.0);
+		Atten = (Atten * Atten);
 
-	float D_143;
-	float m2_144;
-	
-	float3 L_146;
-	
+		//final Irradiance
+		finalIrradiance = (finalIrradiance + (Lights0[1].xyz * (Lights0Cos * Atten)));
 
+		float RoughnessIntensity = ((Roughness_var * Roughness_var) + 0.0002);
 
-	float3 LightDis = (Lights0[0].xyz - posWorld.xyz);
+		RoughnessIntensity = (RoughnessIntensity * RoughnessIntensity);
 
-	float RealDis = sqrt(dot (LightDis, LightDis));
-	L_146 = (LightDis / RealDis);
-	float tmpvar_149;
-	tmpvar_149 = clamp (dot (MaksNormalDir, L_146), 0.0, 1.0);
-	
-	float Atten = clamp (((RealDis * Lights0[1].w) + Lights0[0].w), 0.0, 1.0);
-
-	Atten = (Atten * Atten);
-
-	DiffLit_141 = (DiffLit_141 + (Lights0[1].xyz * (tmpvar_149 * Atten)));
-
-	
-	float tmpvar_151 = ((Roughness_var * Roughness_var) + 0.0002);
-	m2_144 = tmpvar_151;
-	m2_144 = (m2_144 * m2_144);
-	float tmpvar_152;
-	tmpvar_152 = clamp (dot (MaksNormalDir, normalize(
-	(viewd + L_146)
-	)), 0.0, 1.0);
-	float tmpvar_153;
-	tmpvar_153 = (((
-	(tmpvar_152 * m2_144)
-	- tmpvar_152) * tmpvar_152) + 1.0);
-	D_143 = ((tmpvar_153 * tmpvar_153) + 1e-06);
-	D_143 = ((0.25 * m2_144) / D_143);
-
-	lighting_142 = ((Lights0[1].xyz * SpecularColor) * ((Atten * tmpvar_149) * D_143));
-
+		float tmpvar_152 = clamp (dot (MaksNormalDir, normalize((viewd + NRealDis))), 0.0, 1.0);
+		float tmpvar_153 = ((((tmpvar_152 * RoughnessIntensity)- tmpvar_152) * tmpvar_152) + 1.0);
+		float D_143 = ((tmpvar_153 * tmpvar_153) + 1e-06);
+		D_143 = ((0.25 * RoughnessIntensity) / D_143);
+		FinalLight = ((Lights0[1].xyz * SpecularColor) * ((Atten * Lights0Cos) * D_143));
 	};
+
 
 /////spot Light
 	if (((Lights1[3].w > 0.0) && (Lights1[2].w <= 0.0))) {
-
-	float D_154;
-	float m2_155;
-	
-	float4 Light0 = Lights1[0];
-	float4 Light1 = Lights1[1];
-	float3 Light2 = Lights1[3].xyz;
-
-
-	//light2obj position
-	float3 LightDis = (Light0.xyz - posWorld.xyz);
-
-	float RealDis = sqrt(dot (LightDis, LightDis));
-
-	LightDis = (LightDis / RealDis);
-
-	float PointlightCos = clamp (dot (MaksNormalDir, LightDis), 0.0, 1.0);
-
-	float tmpvar_167 = dot (Lights1[2].xyz, -(LightDis));
-
-	float Atten = clamp (((RealDis * Light1.w) + Light0.w), 0.0, 1.0);
-
-	Atten = (Atten * Atten);
-
-	
-	float spot = pow (clamp (((tmpvar_167 * Light2.y) + Light2.z), 0.0, 1.0), Light2.x);
-
-	
-	float tmpvar_171;
-	tmpvar_171 = ((Roughness_var * Roughness_var) + 0.0002);
-	m2_155 = tmpvar_171;
-	m2_155 = (m2_155 * m2_155);
-
-	float tmpvar_172 = clamp (dot (MaksNormalDir, normalize((viewd + LightDis))), 0.0, 1.0);
-
-
-	float tmpvar_173 = ((((tmpvar_172 * m2_155)- tmpvar_172) * tmpvar_172) + 1.0);
-
-	D_154 = ((tmpvar_173 * tmpvar_173) + 1e-06);
-
-	D_154 = ((0.25 * m2_155) / D_154);
-
-	lighting_142 = (lighting_142 + (((Lights1[1].xyz * SpecularColor)* ((Atten * PointlightCos) * D_154)) * spot));
-
-	DiffLit_141 = (DiffLit_141 + (Light1.xyz * ((PointlightCos * Atten)* spot)));
+		float4 Light0 = Lights1[0];
+		float4 Light1 = Lights1[1];
+		float3 Light2 = Lights1[3].xyz;
+		//light2obj position
+		float3 LightDis = (Light0.xyz - posWorld.xyz);
+		float RealDis = sqrt(dot (LightDis, LightDis));
+		LightDis = (LightDis / RealDis);
+		float PointlightCos = clamp (dot (MaksNormalDir, LightDis), 0.0, 1.0);
+		float tmpvar_167 = dot (Lights1[2].xyz, -(LightDis));
+		float Atten = clamp (((RealDis * Light1.w) + Light0.w), 0.0, 1.0);
+		Atten = (Atten * Atten);
+		float spot = pow (clamp (((tmpvar_167 * Light2.y) + Light2.z), 0.0, 1.0), Light2.x);
+		float tmpvar_171 = ((Roughness_var * Roughness_var) + 0.0002);
+		tmpvar_171 = (tmpvar_171 * tmpvar_171);
+		float tmpvar_172 = clamp (dot (MaksNormalDir, normalize((viewd + LightDis))), 0.0, 1.0);
+		float tmpvar_173 = ((((tmpvar_172 * tmpvar_171)- tmpvar_172) * tmpvar_172) + 1.0);
+		float D_154 = ((tmpvar_173 * tmpvar_173) + 1e-06);
+		D_154 = ((0.25 * tmpvar_171) / D_154);
+		FinalLight = (FinalLight + (((Lights1[1].xyz * SpecularColor)* ((Atten * PointlightCos) * D_154)) * spot));
+		finalIrradiance = (finalIrradiance + (Light1.xyz * ((PointlightCos * Atten)* spot)));
 	};
 
 
-	DiffuseIrradiance_7 = DiffLit_141;
-	SpecRadiance_6 = (SpecRadiance_6 + lighting_142);
+
+
+
+	DiffuseIrradiance_7 = finalIrradiance;
+	SpecRadiance_6 = (SpecRadiance_6 + FinalLight);
 
 	float3 Cubeconver = (SpecRadiance_6 + ((DiffuseIrradiance_7 * BaseColor.xyz) / 3.141593));
-
-
-
 /////emission use for mask face mask additve
 	////Emssion Mask
 	float4 EmssionMap = tex2D (sEmissionSampler, uv0);
@@ -754,9 +690,6 @@ fixed4 frag (vertexout i) : SV_Target{
     //float3 finalEmssion = (EmssionMap.xyz * (EmssionMap.w * ((EmssionColor.x * (1.0 - tmpvar_178)) + (EmssionColor.y * tmpvar_178))));
 	float EmissionMask = 1 -clamp ((sin(((6.283185 *(CameraPosPS - EmssionColor.w)) * EmssionColor.z)) - 0.8), 0.0, 1.0);
 	float3 finalEmssion = EmissionMask * EmssionMap * EmssionMap.w ;
-
-    
-
 	float3 Diff = (Cubeconver.xyz + finalEmssion);
 
 	return float4(Diff,1);
