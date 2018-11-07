@@ -18,6 +18,20 @@
 		EmssionColor("EmssionColor", Color) = (1,1,1,1)
 		CameraPosPS("CameraPosPS",float) = 0
 		Lights0("Lights0",Vector) = (1,1,1,1)
+
+		Light0_DIR("Light0_DIR" , Vector) = (1,1,1,1)
+		Light0_COLOR("Light0_COLOR",Color)= (1,1,1,1)
+
+		Light0_Switch("Light0_Switch" , Int) = 1
+
+		EnvInfo("EnvInfo",Vector)= (1,1,1,1)
+
+		cVirtualLitDir ("cVirtualLitDir",Vector) = (1,1,1,1)
+
+		cVirtualLitColor("cVirtualLitColor",Color) = (1,1,1,1)
+
+
+
 	}
 	SubShader
 	{
@@ -51,12 +65,24 @@
 			uniform float CameraPosPS;
 			uniform float4 EnvInfo;
 			uniform float3 SunColor;
-			uniform float3 LightDir;
+			//uniform float3 LightDir;
 			uniform float4 FogColor;
 			uniform float4 ShadowColor;
 			uniform float4 FogColor2;
 			uniform float4 FogColor3;
+
+			uniform float4 Light0_DIR;
+			uniform float4 Light0_COLOR;
+			uniform int Light0_Switch;
+
+			uniform float4 Light1_DIR;
+			uniform float4 Light1_COLOR;
+			uniform int Light1_Switch;
+
+
 			uniform float4 Lights0[4];
+
+
 			uniform float4 Lights1[4];
 			uniform float4 cShadowBias;
 			uniform float4 cPointCloud[6];
@@ -165,7 +191,7 @@ vertexout vert (vertexin v)
 	GPUSKINNormalSpace = GPUSKINVertex;
 
 	float4 viewDirection;			
-	float4 tmpvar_25;
+	float4 GPUSKINcc;
 
 	float4 Obj2World = (mul(World,NewBonePositon1).xyz,1);
 
@@ -179,7 +205,7 @@ vertexout vert (vertexin v)
 
 	float3x3 WorldSpace3 = {World[0].xyz,World[1].xyz, World[2].xyz};		
 
-	tmpvar_25.xyz = normalize(mul( WorldSpace3,GPUSKINVertex));
+	GPUSKINcc.xyz = normalize(mul( WorldSpace3,GPUSKINVertex));
 
 
 	viewDirection.xyz = (Obj2World.xyz - CameraPosVS.xyz);
@@ -224,7 +250,7 @@ vertexout vert (vertexin v)
 
 	o.xlv_TEXCOORD7 = mul(LightViewProjTex,Obj2World);
 
-	o.xlv_COLOR = tmpvar_25;
+	o.xlv_COLOR = GPUSKINcc;
 
 	//gl_Position.z = ((tmpvar_35.z * 2.0) - tmpvar_35.w);//
 
@@ -251,45 +277,40 @@ fixed4 frag (vertexout i) : SV_Target{
 	float3 SpecRadiance_6;
 	float3 DiffuseIrradiance_7;
 	
-	float inShadow_9;
+	
 	float shadow_10;
 	
 	float vertexColorW_15;
 	
 
-	float Roughness_18;
+	
 
-	///Diffuse
-	float4 Basesampler_var = tex2Dbias (sBaseSampler, float4(uv0.xy,0,cBaseMapBias));
-	float3 Diffuse = Basesampler_var.xyz;
-	float4 BaseColor = ( Diffuse * Diffuse , Basesampler_var.a);  
-	float Roughness =  max ((1.0 - Basesampler_var.a), 0.03);
+////////Diffuse
+	float4 Diffuse_var = tex2Dbias (sBaseSampler, float4(uv0.xy,0,cBaseMapBias));
+	float3 Diffuse = Diffuse_var.xyz;
+	float4 BaseColor = ( Diffuse * Diffuse , Diffuse_var.a);  
 
+	float Roughness =  max ((1.0 - Diffuse_var.a), 0.03);
 
-	float tmpvar_23 = (EnvInfo.x * 0.5);
-
-	float rain_22 = tmpvar_23;
+  
+	float rain_22 = (EnvInfo.x * 0.5);
 
 	float RainColor = clamp ((((3.0 * normaldir.y)+ 0.2) + (0.1 * rain_22)), 0.0, 1.0);
 
 	rain_22 = (1.0 - (rain_22 * RainColor));
 
 
-	float tmpvar_25 = clamp ((rain_22 * Roughness), 0.05, 1.0);
-
-	Roughness_18 = tmpvar_25;
+	float Roughness_18 = clamp ((rain_22 * Roughness), 0.05, 1.0);
 
 	float4 MaksTex = tex2D (sMixSampler, uv0.xy);
 
 	BaseColor.xyz = ((BaseColor.xyz * (1.0 - MaksTex.a)) + ((BaseColor.xyz * float3(1.35, 1.2, 1.3)) * MaksTex.a));	
 
-	
-	
 
 	float Ma = (1.0 - MaksTex.a);
 
 
-	////Normal
+///////Normal
 	float4 NormalTex =  tex2Dbias (sNormalSampler, float4 (uv0,0, cNormalMapBias));
 
 	float4 BaseNormal = NormalTex;
@@ -305,27 +326,20 @@ fixed4 frag (vertexout i) : SV_Target{
 	float3 normalDirection = normalize((((normalize(tangentDir) * BaseNormal.x) + (normalize(bitangentDir) * BaseNormal.y)) + ( normalize(normaldir.xyz)* BaseNormal.z)));
 	float3 finalNormal = normalize((BaseNormal.xyz + (( DetailNormal * 0.2) * (maokong_intensity * BaseNormal.w))));
 	float3 normalDirection2 = normalize((((tangentDir * finalNormal.x)+(bitangentDir * finalNormal.y)) + (normaldir.xyz * finalNormal.z)));
+	float3 VertexColor = normalize(xlv_COLOR.xyz);
+	float3 MaksNormalDir = normalize(((normalDirection2 * (1.0 - MaksTex.x)) + (VertexColor * MaksTex.x)));
 
 
 
-	float3 tmpvar_34 = normalize(xlv_COLOR.xyz);
-
-	float3 MaksNormalDir = normalize(((normalDirection2 * (1.0 - MaksTex.x)) + (tmpvar_34 * MaksTex.x)));
 
 	float3 viewd = normalize(-(xlv_TEXCOORD3.xyz));
-
-	
-
-
 	float3 I_37 = -(viewd);
 
-	float tmpvar_38 = clamp (dot (normalDirection, viewd), 0.0, 1.0);
+	float NdotV = clamp (dot (normalDirection, viewd), 0.0, 1.0);
+	float NoL = clamp (dot (normalDirection, cVirtualLitDir), 0.0, 1.0);
 
-
-	float SunCos = clamp (dot (normalDirection, LightDir), 0.0, 1.0);
-
-	float F1_11 = (1.0 - tmpvar_38);
-	F1_11 = (F1_11 * F1_11);
+	float F1_11 = (1.0 - NdotV);
+	F1_11 = (F1_11 * F1_11); // |normal|
 
 	float3 SpecularMask1_17 = (DetailNormalMap.x * _SkinSpec_color1);
 	float3 SpecularMask2_16 = (DetailNormalMap.y * _SkinSpec_color2);
@@ -467,6 +481,9 @@ fixed4 frag (vertexout i) : SV_Target{
 	+ (tmpvar_82.y * tmpvar_50.y))) * 0.11111);
 
 
+
+float inShadow_9;
+
 	inShadow_44 = (1.0 - inShadow_44);
 	inShadow_9 = (inShadow_44 * inRange_8.x);
 	inShadow_9 = (1.0 - inShadow_9);
@@ -474,8 +491,6 @@ fixed4 frag (vertexout i) : SV_Target{
 
 
 	float3 Shadow = ((SunColor * cPointCloud[0].w) * ShadowColor.y);
-
-
 
 
 	float3 tmpvar_87 = (normalDirection * normalDirection);
@@ -487,28 +502,30 @@ fixed4 frag (vertexout i) : SV_Target{
 	float4 linearColor = (((tmpvar_87.x * cPointCloud[tmpvar_88.x]) + (tmpvar_87.y * cPointCloud[(tmpvar_88.y + 2)])) + (tmpvar_87.z * cPointCloud[(tmpvar_88.z + 4)]));
 
 
+	float3 Shadowv = (linearColor.xyz * (ShadowColor.x * (10.0 + ((cPointCloud[3].w * ShadowColor.z) * 100.0))));
 
-	float3 tmpvar_84 = (linearColor.xyz * (ShadowColor.x * (10.0 + ((cPointCloud[3].w * ShadowColor.z) * 100.0))));
-
-	float3 tmpvar_90 = (tmpvar_84 * MaksTex.z);
+	float3 ShadowMask = (Shadowv * MaksTex.z);
 
 	float3 VirtualLitDir = normalize(cVirtualLitDir.xyz);
 
-	float3 ts =((0.444 + (0.556 * clamp (dot (MaksNormalDir, VirtualLitDir), 0.0, 1.0))));
+	float3 NdotL =((0.444 + (0.556 * clamp (dot (MaksNormalDir, VirtualLitDir), 0.0, 1.0))));
 
-	float3 tmpvar_92 = ((cVirtualLitColor * MaksTex.z) *ts);
+/////mask skin lgiht
+	float3 Vlight = ((cVirtualLitColor * MaksTex.z) * NdotL);
 
-	float tmpvar_93 = clamp ((0.6 + dot (tmpvar_34, LightDir)), 0.0, 1.0);
+	float tmpvar_93 = clamp ((0.6 + dot (VertexColor, VirtualLitDir)), 0.0, 1.0);
 
 
 	float2 tmpvar_94;
-	tmpvar_94.x = ((0.5 * dot (normalDirection, LightDir)) + 0.5);
+	tmpvar_94.x = ((0.5 * dot (normalDirection, VirtualLitDir)) + 0.5);
 	tmpvar_94.y = (cSSSIntensity * MaksTex.y);
 
 
 	float4 LutMapSampler = tex2D (sLutMapSampler, tmpvar_94);
 
-	float tmpvar_96 = (shadow_10 + ((clamp (dot (normalDirection2, LightDir), 0.0, 1.0)- SunCos) * shadow_10));
+
+
+	float tmpvar_96 = (shadow_10 + ((clamp (dot (normalDirection2, VirtualLitDir), 0.0, 1.0)- NoL) * shadow_10));
 
 
 
@@ -518,151 +535,156 @@ fixed4 frag (vertexout i) : SV_Target{
 
 	tmpvar_97.x = ((sqrt((tmpvar_96 + 0.0001)) * (1.0 - SSSIntensity)) + (tmpvar_96 * SSSIntensity));
 
-	tmpvar_97.yz = float2(tmpvar_96,tmpvar_96);
-
-	DiffuseIrradiance_7 = (((tmpvar_90 + ((((((Shadow + tmpvar_90) * MaksTex.x)* cSSSColor.xyz) * float3(tmpvar_93,tmpvar_93,tmpvar_93)) * float3(tmpvar_93,tmpvar_93,tmpvar_93)) * shadow_10)
-	) + tmpvar_92) + (((((tmpvar_97 * tmpvar_97) * (LutMapSampler.xyz * LutMapSampler.xyz)) * (1.0 - Ma))+ ((SunCos * shadow_10) * Ma)
-	) * Shadow));
+	tmpvar_97.yz = tmpvar_96;
 
 
+	DiffuseIrradiance_7 = (((ShadowMask + ((((((Shadow + ShadowMask) * MaksTex.x)* cSSSColor.xyz) 
+		* tmpvar_93) * tmpvar_93) * shadow_10)) + Vlight) +
+		 (((((tmpvar_97 * tmpvar_97) * (LutMapSampler.xyz * LutMapSampler.xyz)) * (1.0 - Ma))+ ((NoL * shadow_10) * Ma)) * Shadow));
 
-	float tmpvar_99 = (((1.0 - ((1.0 - Roughness_18) * RoughnessOffset1)) * (1.0 - Ma)) + (Roughness_18 * Ma));
 
-	float tmpvar_100 = (((Roughness_18 * RoughnessOffset2) * (1.0 - Ma)) + (Roughness_18 * Ma));
-	float d_101;
-	float m2_102;
-	float m_103;
-	float3 tmpvar_104;
-	tmpvar_104 = normalize((LightDir + viewd));
-	float tmpvar_105;
-	tmpvar_105 = clamp (dot (normalDirection2, tmpvar_104), 0.0, 1.0);
-	float tmpvar_106;
-	tmpvar_106 = clamp (dot (viewd, tmpvar_104), 0.0, 1.0);
-	float tmpvar_107;
-	tmpvar_107 = (tmpvar_99 * tmpvar_99);
-	float tmpvar_108;
-	tmpvar_108 = (tmpvar_107 * tmpvar_107);
-	float tmpvar_109;
-	tmpvar_109 = (((
-	(tmpvar_105 * tmpvar_108)
-	- tmpvar_105) * tmpvar_105) + 1.0);
-	m_103 = (tmpvar_100 * tmpvar_100);
-	m2_102 = (m_103 * m_103);
-	d_101 = (((
-	(tmpvar_105 * m2_102)
-	- tmpvar_105) * tmpvar_105) + 1.0);
-	float3 tmpvar_110;
-	tmpvar_110 = ((float3(0.04, 0.04, 0.04) + (float3(0.96, 0.96, 0.96) * 
-	exp2((((-5.55473 * tmpvar_106) - 6.98316) * tmpvar_106))
-	)) * 0.25);
-	float tmpvar_111;
-	tmpvar_111 = ((Shadow * SunCos) * (2.0 * shadow_10)).x;
-	float tmpvar_112;
-	tmpvar_112 = (((tmpvar_108 / 
-	((tmpvar_109 * tmpvar_109) * 3.141593)
-	) * tmpvar_110) * tmpvar_111).x;
-	float3 BRDF1_113;
-	float d_114;
-	float m2_115;
-	float m_116;
-	float3 tmpvar_117;
-	tmpvar_117 = normalize((VirtualLitDir + viewd));
-	float tmpvar_118;
-	tmpvar_118 = clamp (dot (normalDirection2, tmpvar_117), 0.0, 1.0);
 
-	float tmpvar_119 = clamp (dot (viewd, tmpvar_117), 0.0, 1.0);
+	float Roughtpow = (((1.0 - ((1.0 - Roughness_18) * RoughnessOffset1)) * (1.0 - Ma)) + (Roughness_18 * Ma));
 
-	float tmpvar_120 = (tmpvar_99 * tmpvar_99);
-	float tmpvar_121;
-	tmpvar_121 = (tmpvar_120 * tmpvar_120);
-	float tmpvar_122;
-	tmpvar_122 = ((((tmpvar_118 * tmpvar_121)- tmpvar_118) * tmpvar_118) + 1.0);
+	float SmallRought = (((Roughness_18 * RoughnessOffset2) * (1.0 - Ma)) + (Roughness_18 * Ma));
+	
+/////////BlinnPhong
+	float3 Halflight = normalize((cVirtualLitDir + viewd));
+	float BlinnPhongspec = clamp (dot (normalDirection2, Halflight), 0.0, 1.0);
 
-	m_116 = (tmpvar_100 * tmpvar_100);
-	m2_115 = (m_116 * m_116);
-	d_114 = ((((tmpvar_118 * m2_115)- tmpvar_118) * tmpvar_118) + 1.0);
+	
+	float VdotH = clamp (dot (viewd, Halflight), 0.0, 1.0);
+	
+	float Pow2 = (Roughtpow * Roughtpow);
+	
+	float RealPow = (Pow2 * Pow2);
+	
+	float BPHightLight = ((((BlinnPhongspec * RealPow)- BlinnPhongspec) * BlinnPhongspec) + 1.0);
 
-	float3 tmpvar_123;
-	tmpvar_123 = ((float3(0.04, 0.04, 0.04) + (float3(0.96, 0.96, 0.96) * exp2((((-5.55473 * tmpvar_119) - 6.98316) * tmpvar_119)))) * 0.25);
-	BRDF1_113 = ((tmpvar_121 / (
-	(tmpvar_122 * tmpvar_122)
-	* 3.141593)) * tmpvar_123);
-	float3 tmpvar_124;
-	float Roughness_125;
-	Roughness_125 = Roughness_18;
-	float4 tmpvar_126;
-	tmpvar_126 = ((Roughness_125 * float4(-1.0, -0.0275, -0.572, 0.022)) + float4(1.0, 0.0425, 1.04, -0.04));
-	float2 tmpvar_127;
-	tmpvar_127 = ((float2(-1.04, 1.04) * (
-	(min ((tmpvar_126.x * tmpvar_126.x), exp2((-9.28 * tmpvar_38))) * tmpvar_126.x)
-	+ tmpvar_126.y)) + tmpvar_126.zw);
-	tmpvar_124 = ((float3(0.04, 0.04, 0.04) * tmpvar_127.x) + tmpvar_127.y);
-	float Roughness_128;
-	Roughness_128 = tmpvar_100;
+	float m_103 = (SmallRought * SmallRought);
+
+	float m2_102 = (m_103 * m_103);
+
+	float d_101 = ((((BlinnPhongspec * m2_102)- BlinnPhongspec) * BlinnPhongspec) + 1.0);
+
+	
+	float3 tmpvar_110 = ((0.04 + (0.96* exp2((((-5.55473 * VdotH) - 6.98316) * VdotH)))) * 0.25);
+
+	
+	
+	float shadowx = ((Shadow * NoL) * (2.0 * shadow_10)).x;
+	
+	float tmpvar_112 = (((RealPow / ((BPHightLight * BPHightLight) * 3.141593)) * tmpvar_110) * shadowx).x;
+
+	
+	float3 DIRaddView = normalize((VirtualLitDir + viewd));
+	
+	float tmpvar_118 = clamp (dot (normalDirection2, DIRaddView), 0.0, 1.0);
+
+	float tmpvar_119 = clamp (dot (viewd, DIRaddView), 0.0, 1.0);
+
+	//float tmpvar_120 = (Roughtpow * Roughtpow);
+	
+	//float tmpvar_121 = (tmpvar_120 * tmpvar_120);
+
+	float tmpvar_122 = ((((tmpvar_118 * RealPow)- tmpvar_118) * tmpvar_118) + 1.0);
+
+	float m_116 = (SmallRought * SmallRought);
+	float m2_115 = (m_116 * m_116);
+	float d_114 = ((((tmpvar_118 * m2_115)- tmpvar_118) * tmpvar_118) + 1.0);
+
+	
+	float3 tmpvar_123 = ((float3(0.04, 0.04, 0.04) + (float3(0.96, 0.96, 0.96) * exp2((((-5.55473 * tmpvar_119) - 6.98316) * tmpvar_119)))) * 0.25);
+
+	float3 BRDF1_113 = ((RealPow / ((tmpvar_122 * tmpvar_122)* 3.141593)) * tmpvar_123);
+
+	
+	
+	
+	
+	float4 tmpvar_126 = ((Roughness_18 * float4(-1.0, -0.0275, -0.572, 0.022)) + float4(1.0, 0.0425, 1.04, -0.04));
+	
+	float2 tmpvar_127 = ((float2(-1.04, 1.04) * ((min ((tmpvar_126.x * tmpvar_126.x), exp2((-9.28 * NdotV))) * tmpvar_126.x)+ tmpvar_126.y)) + tmpvar_126.zw);
+	float3 tmpvar_124 = ((float3(0.04, 0.04, 0.04) * tmpvar_127.x) + tmpvar_127.y);
+	
+
 
 	float3 R_129 = (I_37 - (2.0 * (dot (normalDirection, I_37)* normalDirection)));
+
 	float tmpvar_134 = float((R_129.z > 0.0));
 
 	float tmpvar_135 = ((tmpvar_134 * 2.0) - 1.0);
 	R_129.xy = (R_129.xy / ((R_129.z * tmpvar_135) + 1.0));
 	R_129.xy = ((R_129.xy * float2(0.25, -0.25)) + (0.25 + (0.5 * tmpvar_134)));
 
-	float4 IBL = texCUBElod(sEnvSampler,float4(R_129, (Roughness_128 / 0.17))).xyzw;
+	float4 IBL = texCUBElod(sEnvSampler,float4(R_129, (SmallRought / 0.17))).xyzw;
+
+
 
 	float3 SPL = (IBL.xyz * ((IBL.w * IBL.w) * 16.0));
 
 	SPL = (SPL * ((cEnvStrength * EnvInfo.w) * 10.0));
 
-	SpecRadiance_6 = (((((tmpvar_112 * SpecularMask1_17) + ((tmpvar_111 * ( (m2_102 / ((d_101 * d_101) * 3.141593))* tmpvar_110)) * SpecularMask2_16))* (1.0 - Ma)
-	) + ((tmpvar_112 * 0.5)* Ma)) + (((tmpvar_92 * ((BRDF1_113 * SpecularMask1_17) + ((
-	(m2_115 / ((d_114 * d_114) * 3.141593))* tmpvar_123) * SpecularMask2_16)))* (1.0 - Ma)) + ((tmpvar_92 * BRDF1_113)* Ma)));
-	SpecRadiance_6 = (SpecRadiance_6 + (((((tmpvar_124 * tmpvar_90) * (SpecularMask1_17 * EnvInfo.w)) * (5.0 * cEnvStrength))* 
-	(1.0 - Ma)) + ((((SPL * tmpvar_124) * MaksTex.z) * ((SpecularMask2_16 * (1.0 - Ma)) + Ma))* dot (tmpvar_90, float3(0.3, 0.59, 0.11)))));
+	SpecRadiance_6 = (((((tmpvar_112 * SpecularMask1_17) + ((shadowx * ( (m2_102 / ((d_101 * d_101) * 3.141593))* tmpvar_110)) * SpecularMask2_16))* (1.0 - Ma)
+	) + ((tmpvar_112 * 0.5)* Ma)) + (((Vlight * ((BRDF1_113 * SpecularMask1_17) + ((
+	(m2_115 / ((d_114 * d_114) * 3.141593))* tmpvar_123) * SpecularMask2_16)))* (1.0 - Ma)) + ((Vlight * BRDF1_113)* Ma)));
+
+	SpecRadiance_6 = (SpecRadiance_6 + (((((tmpvar_124 * ShadowMask) * (SpecularMask1_17 * EnvInfo.w)) * (5.0 * cEnvStrength))* 
+	(1.0 - Ma)) + ((((SPL * tmpvar_124) * MaksTex.z) * ((SpecularMask2_16 * (1.0 - Ma)) + Ma))* dot (ShadowMask, float3(0.3, 0.59, 0.11)))));
 
 	float tmpvar_137 = (((SpecularMask2_16 + SpecularMask1_17) * (1.0 - Ma)) + Ma).x;
 	specularMask_5 = tmpvar_137;
 	float3 SpecularColor = (float3(0.04, 0.04, 0.04) * specularMask_5);
 	float Roughness_var = clamp (Roughness_18, 0.0, 1.0);
 	float3 finalIrradiance = DiffuseIrradiance_7;
+
 	float3 FinalLight = float3(0.0, 0.0, 0.0);;
 
 
 //if light0 w > 0
-	if ((Lights0[3].w > 0.0)) {
-		float3 LightDis = (Lights0[0].xyz - posWorld.xyz);
+	if ((Light0_Switch> 0.0)) {
+
+		float3 LightDis = (Light0_DIR.xyz - posWorld.xyz);
+
 		float RealDis = sqrt(dot (LightDis, LightDis));
 		float3 NRealDis = (LightDis / RealDis);
 		float Lights0Cos = clamp (dot (MaksNormalDir, NRealDis), 0.0, 1.0);
-		float Atten = clamp (((RealDis * Lights0[1].w) + Lights0[0].w), 0.0, 1.0);
+		float Atten = clamp (((RealDis * Light0_COLOR.w) + Light0_DIR.w), 0.0, 1.0);
 		Atten = (Atten * Atten);
 
 		//final Irradiance
-		finalIrradiance = (finalIrradiance + (Lights0[1].xyz * (Lights0Cos * Atten)));
+		finalIrradiance = (finalIrradiance + (Light0_COLOR.xyz * (Lights0Cos * Atten)));
 
 		float RoughnessIntensity = ((Roughness_var * Roughness_var) + 0.0002);
 
 		RoughnessIntensity = (RoughnessIntensity * RoughnessIntensity);
 
 		float tmpvar_152 = clamp (dot (MaksNormalDir, normalize((viewd + NRealDis))), 0.0, 1.0);
-		float tmpvar_153 = ((((tmpvar_152 * RoughnessIntensity)- tmpvar_152) * tmpvar_152) + 1.0);
-		float D_143 = ((tmpvar_153 * tmpvar_153) + 1e-06);
-		D_143 = ((0.25 * RoughnessIntensity) / D_143);
-		FinalLight = ((Lights0[1].xyz * SpecularColor) * ((Atten * Lights0Cos) * D_143));
+		float Roughness = ((((tmpvar_152 * RoughnessIntensity)- tmpvar_152) * tmpvar_152) + 1.0);
+
+		float FinalRoughness = ((Roughness * Roughness) + 1e-06);
+
+		FinalRoughness = ((0.25 * RoughnessIntensity) / FinalRoughness);
+
+		FinalLight = ((Light0_COLOR.xyz * SpecularColor) * ((Atten * Lights0Cos) * FinalRoughness));
 	};
 
 
 /////spot Light
 	if (((Lights1[3].w > 0.0) && (Lights1[2].w <= 0.0))) {
-		float4 Light0 = Lights1[0];
-		float4 Light1 = Lights1[1];
+
+		//float4 Light0 = Light1_DIR;
+		//float4 Light1 = Light1_COLOR;
+
+
 		float3 Light2 = Lights1[3].xyz;
 		//light2obj position
-		float3 LightDis = (Light0.xyz - posWorld.xyz);
+		float3 LightDis = (Light1_DIR.xyz - posWorld.xyz);
 		float RealDis = sqrt(dot (LightDis, LightDis));
 		LightDis = (LightDis / RealDis);
 		float PointlightCos = clamp (dot (MaksNormalDir, LightDis), 0.0, 1.0);
 		float tmpvar_167 = dot (Lights1[2].xyz, -(LightDis));
-		float Atten = clamp (((RealDis * Light1.w) + Light0.w), 0.0, 1.0);
+		float Atten = clamp (((RealDis * Light1_COLOR.w) + Light1_DIR.w), 0.0, 1.0);
 		Atten = (Atten * Atten);
 		float spot = pow (clamp (((tmpvar_167 * Light2.y) + Light2.z), 0.0, 1.0), Light2.x);
 		float tmpvar_171 = ((Roughness_var * Roughness_var) + 0.0002);
@@ -672,7 +694,8 @@ fixed4 frag (vertexout i) : SV_Target{
 		float D_154 = ((tmpvar_173 * tmpvar_173) + 1e-06);
 		D_154 = ((0.25 * tmpvar_171) / D_154);
 		FinalLight = (FinalLight + (((Lights1[1].xyz * SpecularColor)* ((Atten * PointlightCos) * D_154)) * spot));
-		finalIrradiance = (finalIrradiance + (Light1.xyz * ((PointlightCos * Atten)* spot)));
+
+		finalIrradiance = (finalIrradiance + (Light1_COLOR.xyz * ((PointlightCos * Atten)* spot)));
 	};
 
 
@@ -680,9 +703,14 @@ fixed4 frag (vertexout i) : SV_Target{
 
 
 	DiffuseIrradiance_7 = finalIrradiance;
+
+
 	SpecRadiance_6 = (SpecRadiance_6 + FinalLight);
 
 	float3 Cubeconver = (SpecRadiance_6 + ((DiffuseIrradiance_7 * BaseColor.xyz) / 3.141593));
+
+	return	 float4 (DiffuseIrradiance_7,1);
+
 /////emission use for mask face mask additve
 	////Emssion Mask
 	float4 EmssionMap = tex2D (sEmissionSampler, uv0);
@@ -691,30 +719,32 @@ fixed4 frag (vertexout i) : SV_Target{
 	float EmissionMask = 1 -clamp ((sin(((6.283185 *(CameraPosPS - EmssionColor.w)) * EmssionColor.z)) - 0.8), 0.0, 1.0);
 	float3 finalEmssion = EmissionMask * EmssionMap * EmssionMap.w ;
 	float3 Diff = (Cubeconver.xyz + finalEmssion);
+	
 
-	return float4(Diff,1);
+
 
 	float3 fogColor_2 = ((FogColor2 * clamp (((viewd.y * 5.0) + 1.0), 0.0, 1.0)) + FogColor.xyz);
 
-	float VoL_1 = clamp (dot (-(viewd), LightDir), 0.0, 1.0);
+	float VoL_1 = clamp (dot (-(viewd), cVirtualLitDir), 0.0, 1.0);
 
 	fogColor_2 = (fogColor_2 + (FogColor3 * (VoL_1 * VoL_1)).xyz);
 
-	float tmpvar_181;
+	
 
-	tmpvar_181 = (1.0 - xlv_TEXCOORD3.w);
+	float viewdis = (1.0 - xlv_TEXCOORD3.w);
 
-	Diff = ((Diff* tmpvar_181) + (((Diff * tmpvar_181) + fogColor_2) * xlv_TEXCOORD3.w));
+	Diff = ((Diff* viewdis) + (((Diff * viewdis) + fogColor_2) * xlv_TEXCOORD3.w));
 
 	Diff = (Diff * EnvInfo.z);
 
-	Diff = clamp (Diff, float3(0.0, 0.0, 0.0), float3(4.0, 4.0, 4.0));
+	//Diff = clamp (Diff, float3(0.0, 0.0, 0.0), float3(4.0, 4.0, 4.0));
 
 	float3 FinalFog = ( FogColor.w ,FogColor2.w ,FogColor3.w);
 
 	Diff.xyz = (Diff * FinalFog);
 
-	Diff.xyz = (Diff / ((Diff * 0.9661836) + 0.180676));				
+	Diff.xyz = (Diff / ((Diff * 0.9661836) + 0.180676));	
+
 	return fixed4(Diff,1);
 	}
 	ENDCG
